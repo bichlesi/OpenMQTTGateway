@@ -1359,6 +1359,31 @@ void setup() {
   Log.notice(F("************** Setup OpenMQTTGateway end **************" CR));
 }
 
+#if defined(ESP32)
+#  include "esp_wifi.h"
+// Connect to the access point of the SSID with the strongest signal instead
+// of the first one found while scanning the channels upwards (default fast
+// scan). With several access points (mesh, repeaters) the gateway otherwise
+// sticks to a weak one on a lower channel. Set in the station config right
+// before connecting, so it also applies to WiFi.begin() without arguments
+// and to the automatic reconnect of the Wi-Fi driver.
+void wifi_prefer_strongest_ap() {
+  // for WiFi.begin(ssid, pass), e.g. from WiFiManager or MQTTtoSYS
+  WiFi.setScanMethod(WIFI_ALL_CHANNEL_SCAN);
+  WiFi.setSortMethod(WIFI_CONNECT_AP_BY_SIGNAL);
+  // for WiFi.begin() and the driver's own reconnect: current station config
+  wifi_config_t conf;
+  if (esp_wifi_get_config(WIFI_IF_STA, &conf) != ESP_OK) return;
+  if (conf.sta.scan_method == WIFI_ALL_CHANNEL_SCAN && conf.sta.sort_method == WIFI_CONNECT_AP_BY_SIGNAL) return;
+  conf.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+  conf.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;
+  esp_err_t err = esp_wifi_set_config(WIFI_IF_STA, &conf);
+  Log.notice(F("WiFi: connect to the strongest AP (all-channel scan): %d" CR), (int)err);
+}
+#else
+void wifi_prefer_strongest_ap() {}
+#endif
+
 #if defined(ESP8266) || defined(ESP32)
 // Bypass for ESP not reconnecting automaticaly the second time https://github.com/espressif/arduino-esp32/issues/2501
 bool wifi_reconnect_bypass() {
@@ -1370,6 +1395,7 @@ bool wifi_reconnect_bypass() {
 #  endif
     Log.notice(F("Attempting Wifi connection with saved AP: %d" CR), wifi_autoreconnect_cnt);
 
+    wifi_prefer_strongest_ap();
     WiFi.begin();
 #  if (defined(ESP8266) || defined(ESP32)) && (defined(WifiGMode) || defined(WifiPower))
     setESPWifiProtocolTxPower();
@@ -1771,6 +1797,7 @@ bool loadConfigFromFlash() {
 void setup_wifimanager(bool reset_settings) {
   delay(10);
   WiFi.mode(WIFI_STA);
+  wifi_prefer_strongest_ap();
 
   if (reset_settings)
     eraseAndRestart();
