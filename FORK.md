@@ -14,6 +14,11 @@ rtl_433, 868,3 MHz, Bresser-Wetterstation). Basis: Tag `v1.7.0`
   11; Folge: ständige Abbrüche und Neustarts. Jetzt: Suche über alle
   Kanäle, Verbindung zum stärksten Signal; gilt für `WiFi.begin()` mit
   und ohne Zugangsdaten und für das automatische Wiederverbinden.
+* **Version** `v1.7.0-bichlesi.N` (Build-Flag `OMG_VERSION` in
+  `env:heltec-rtl_433-fsk`; ohne setzt ein lokaler Build „version_tag“).
+  Achtung: Das Update-Angebot in Home Assistant („Firmware update“) holt
+  die offizielle Version von 1technophile und würde diese Änderungen
+  überschreiben. Nur aus diesem Fork aktualisieren.
 * **868,3 MHz** als Standard in `env:heltec-rtl_433-fsk` (das Gateway läuft
   so; gespeicherte RF-Einstellungen haben ohnehin Vorrang).
 
